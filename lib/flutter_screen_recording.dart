@@ -19,4 +19,10 @@ class FlutterScreenRecording {
     final String path = await _channel.invokeMethod('stopRecordScreen');
     return path;
   }
+
+  static Future<String> scanRecordFile(String name) async {
+    final String path = await _channel.invokeMethod('scanRecordFile', {"name": name});
+    return path;
+  }
+
 }

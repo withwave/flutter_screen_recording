@@ -8,6 +8,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.MediaRecorder
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.media.MediaScannerConnection
 import android.os.Environment
 import android.util.DisplayMetrics
 import android.util.Log
@@ -103,6 +104,11 @@ class FlutterScreenRecordingPlugin(
             try {
                 if (mMediaRecorder != null) {
                     stopRecordScreen()
+
+                    MediaScannerConnection.scanFile( registrar.context().applicationContext ,
+                    arrayOf( "${storePath}${videoName}.mp4" ),
+                    arrayOf( "video/avc" ,"*/*" ) , null )
+
                     result.success("${storePath}${videoName}.mp4")
                 } else {
                     result.success("")
@@ -110,7 +116,19 @@ class FlutterScreenRecordingPlugin(
             } catch (e: Exception) {
                 result.success("")
             }
+        } else if (call.method == "scanRecordFile") {
+            try {
+                var filepath = call.argument<String?>("name")
+                println("scanRecordFile ${filepath}")
+                MediaScannerConnection.scanFile( registrar.context().applicationContext ,
+                        arrayOf( "${filepath}" ),
+                        arrayOf( "video/avc" ,"*/*" ) , null )
 
+                result.success("${filepath}")
+
+            } catch (e: Exception) {
+                result.success("")
+            }
         } else {
             result.notImplemented()
         }
