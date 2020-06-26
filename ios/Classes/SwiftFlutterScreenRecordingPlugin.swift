@@ -16,6 +16,8 @@ var nameVideo: String = ""
 var recordAudio: Bool = false;
 var myResult: FlutterResult?
 let screenSize = UIScreen.main.bounds
+
+let bitrate:NSNumber = NSNumber(value:300000)
     
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "flutter_screen_recording", binaryMessenger: registrar.messenger())
@@ -73,32 +75,38 @@ let screenSize = UIScreen.main.bounds
                 codec = AVVideoCodecH264;
             }
             
-            let videoSettings: [String : Any] = [
+             let videoSettings: [String : Any] = [
+                AVVideoCompressionPropertiesKey : [AVVideoAverageBitRateKey:self.bitrate],
                 AVVideoCodecKey  : codec,
-                AVVideoWidthKey  : screenSize.width,
-                AVVideoHeightKey : screenSize.height
+                AVVideoWidthKey  : 1280,  //screenSize.width,
+                AVVideoHeightKey : 720, //screenSize.height
             ]
                         
-            if(recordAudio){
-                
-                let audioOutputSettings: [String : Any] = [
-                    AVNumberOfChannelsKey : 2,
-                    AVFormatIDKey : kAudioFormatMPEG4AAC,
-                    AVSampleRateKey: 44100,
-                ]
-                
-                audioInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: audioOutputSettings)
-                videoWriter?.add(audioInput)
+            //Create the asset writer input object whihc is actually used to write out the video
+            videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: videoSettings);
+            videoWriter?.add(videoWriterInput!);
             
-            }
-
-
-        //Create the asset writer input object whihc is actually used to write out the video
-         videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: videoSettings);
-         videoWriter?.add(videoWriterInput!);
+            videoWriter?.movieTimeScale = 60;
+            videoWriterInput?.expectsMediaDataInRealTime = true;
+            
+            if(recordAudio){
+                         
+                 let audioOutputSettings: [String : Any] = [
+                     AVNumberOfChannelsKey : 2,
+                     AVFormatIDKey : kAudioFormatMPEG4AAC,
+                     AVSampleRateKey: 44100,
+                     AVEncoderBitRateKey : 64000
+                 ]
+                 
+                 audioInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: audioOutputSettings)
+                 videoWriter?.add(audioInput)
+             
+             }
             
         }
 
+        var bStartWrite = false;
+        
         //Tell the screen recorder to start capturing and to call the handler
         if #available(iOS 11.0, *) {
             
@@ -118,13 +126,15 @@ let screenSize = UIScreen.main.bounds
                     return;
                 }
 
+      
                 switch rpSampleType {
-                case RPSampleBufferType.video:
-                    print("writing sample....");
+                case RPSampleBufferType.video :
+                    print("writing sample....video");
                     if self.videoWriter?.status == AVAssetWriter.Status.unknown {
 
                         if (( self.videoWriter?.startWriting ) != nil) {
                             print("Starting writing");
+                            bStartWrite = true;
                             self.myResult!(true)
                             self.videoWriter?.startWriting()
                             self.videoWriter?.startSession(atSourceTime:  CMSampleBufferGetPresentationTimeStamp(cmSampleBuffer))
@@ -140,11 +150,22 @@ let screenSize = UIScreen.main.bounds
                             }
                         }
                     }
-
-
+                    
+                case RPSampleBufferType.audioMic :
+                    print("writing sample....audio");
+                    if ( bStartWrite == true ) {
+                        if (self.audioInput?.isReadyForMoreMediaData == true) {
+                           if  self.audioInput?.append(cmSampleBuffer) == false {
+                               print(" we have a problem writing audio")
+                               self.myResult!(false)
+                           }
+                       }
+                    }
+                    
                 default:
                    print("not a video sample, so ignore");
                 }
+         
             } ){(error) in
                         guard error == nil else {
                            //Handle error
