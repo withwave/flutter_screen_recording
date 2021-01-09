@@ -129,6 +129,13 @@ class FlutterScreenRecordingPlugin(
             } catch (e: Exception) {
                 result.success("")
             }
+        } else if (call.method == "getRecordPath") {
+            println("getRecordPath ${storePath}")
+            try {
+                result.success("${storePath}")
+            } catch (e: Exception) {
+                result.success("")
+            }
         } else {
             result.notImplemented()
         }
