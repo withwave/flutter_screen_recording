@@ -18,7 +18,9 @@ var myResult: FlutterResult?
 let screenSize = UIScreen.main.bounds
 
 let bitrate:NSNumber = NSNumber(value:300000)
-    
+
+var bStartWrite : Bool = false;
+
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "flutter_screen_recording", binaryMessenger: registrar.messenger())
     let instance = SwiftFlutterScreenRecordingPlugin()
@@ -104,8 +106,6 @@ let bitrate:NSNumber = NSNumber(value:300000)
              }
             
         }
-
-        var bStartWrite = false;
         
         //Tell the screen recorder to start capturing and to call the handler
         if #available(iOS 11.0, *) {
@@ -134,7 +134,7 @@ let bitrate:NSNumber = NSNumber(value:300000)
 
                         if (( self.videoWriter?.startWriting ) != nil) {
                             print("Starting writing");
-                            bStartWrite = true;
+                            self.bStartWrite = true;
                             self.myResult!(true)
                             self.videoWriter?.startWriting()
                             self.videoWriter?.startSession(atSourceTime:  CMSampleBufferGetPresentationTimeStamp(cmSampleBuffer))
@@ -153,7 +153,7 @@ let bitrate:NSNumber = NSNumber(value:300000)
                     
                 case RPSampleBufferType.audioMic :
                     print("writing sample....audio");
-                    if ( bStartWrite == true ) {
+                    if ( self.bStartWrite == true ) {
                         if (self.audioInput?.isReadyForMoreMediaData == true) {
                            if  self.audioInput?.append(cmSampleBuffer) == false {
                                print(" we have a problem writing audio")
@@ -188,7 +188,7 @@ let bitrate:NSNumber = NSNumber(value:300000)
         } else {
           //  Fallback on earlier versions
         }
-
+        self.bStartWrite = false;
         self.videoWriterInput?.markAsFinished();
         self.videoWriter?.finishWriting {
             print("finished writing video");
