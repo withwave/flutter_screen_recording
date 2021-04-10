@@ -129,7 +129,7 @@ var bStartWrite : Bool = false;
       
                 switch rpSampleType {
                 case RPSampleBufferType.video :
-                    print("writing sample....video");
+                    print("sample....video");
                     if self.videoWriter?.status == AVAssetWriter.Status.unknown {
 
                         if (( self.videoWriter?.startWriting ) != nil) {
@@ -141,9 +141,9 @@ var bStartWrite : Bool = false;
                         }
                     }
 
-                    if self.videoWriter?.status == AVAssetWriter.Status.writing {
+                    if (self.bStartWrite && self.videoWriter?.status == AVAssetWriter.Status.writing) {
                         if (self.videoWriterInput?.isReadyForMoreMediaData == true) {
-                            print("Writting a sample");
+                            print("append....video");
                             if  self.videoWriterInput?.append(cmSampleBuffer) == false {
                                 print(" we have a problem writing video")
                                 self.myResult!(false)
@@ -152,13 +152,14 @@ var bStartWrite : Bool = false;
                     }
                     
                 case RPSampleBufferType.audioMic :
-                    print("writing sample....audio");
+                    print("sample....audio");
                     if ( self.bStartWrite == true ) {
                         if (self.audioInput?.isReadyForMoreMediaData == true) {
-                           if  self.audioInput?.append(cmSampleBuffer) == false {
-                               print(" we have a problem writing audio")
-                               self.myResult!(false)
-                           }
+                            print("append....audio");
+                            if  self.audioInput?.append(cmSampleBuffer) == false {
+                                print(" we have a problem writing audio")
+                                self.myResult!(false)
+                            }
                        }
                     }
                     
